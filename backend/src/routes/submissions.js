@@ -98,8 +98,8 @@ router.post("/", requireAuth, async (req, res) => {
             compileError: judgeResult.compileError
         });
     } catch (err) {
-        console.error("Judge error:", err);
-        res.status(500).json({ error: "Lỗi hệ thống khi chấm bài" });
+        console.error("Judge error detail:", err);
+        res.status(500).json({ error: "Lỗi hệ thống khi chấm bài: " + err.message });
     }
 });
 
