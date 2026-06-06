@@ -76,6 +76,26 @@ db.exec(`
         FOREIGN KEY (problem_id) REFERENCES problems(id)
     );
 
+    CREATE TABLE IF NOT EXISTS user_tasks (
+        user_id TEXT NOT NULL,
+        task_id TEXT NOT NULL,
+        completed INTEGER DEFAULT 0,
+        updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+        PRIMARY KEY (user_id, task_id),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+    );
+
+    CREATE TABLE IF NOT EXISTS problem_drafts (
+        user_id TEXT NOT NULL,
+        problem_id TEXT NOT NULL,
+        language TEXT NOT NULL,
+        code TEXT NOT NULL,
+        updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+        PRIMARY KEY (user_id, problem_id, language),
+        FOREIGN KEY (user_id) REFERENCES users(id),
+        FOREIGN KEY (problem_id) REFERENCES problems(id)
+    );
+
     CREATE INDEX IF NOT EXISTS idx_submissions_user ON submissions(user_id);
     CREATE INDEX IF NOT EXISTS idx_submissions_problem ON submissions(problem_id);
     CREATE INDEX IF NOT EXISTS idx_test_cases_problem ON test_cases(problem_id);

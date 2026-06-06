@@ -51,19 +51,42 @@ document.addEventListener("DOMContentLoaded", async function () {
                 minimap: { enabled: false },
                 lineNumbersMinChars: 3
             });
+
+            // Tải bản nháp từ server nếu có
+            if (api.isLoggedIn()) {
+                api.getDraft(currentProblem.id, "cpp").then(res => {
+                    if (res && res.code) editorInstance.setValue(res.code);
+                });
+            }
+
+            // Tự động lưu nháp
+            let saveTimeout;
+            editorInstance.onDidChangeModelContent(() => {
+                clearTimeout(saveTimeout);
+                saveTimeout = setTimeout(async () => {
+                    if (api.isLoggedIn()) {
+                        const code = editorInstance.getValue();
+                        const language = document.getElementById("language-select").value;
+                        await api.saveDraft(currentProblem.id, language, code);
+                    }
+                }, 2000);
+            });
         });
     }
 
     const langSelect = document.getElementById("language-select");
-    langSelect.addEventListener("change", function () {
+    langSelect.addEventListener("change", async function () {
         const lang = langSelect.value;
         if (editorInstance) {
-            const currentCode = editorInstance.getValue();
-            const cppDefaults = [boilerplates.cpp.AB_SUM, boilerplates.cpp.PRIME_CHECK, boilerplates.cpp.default];
-            const pyDefaults = [boilerplates.python.AB_SUM, boilerplates.python.PRIME_CHECK, boilerplates.python.default];
-            const isUntouched = cppDefaults.includes(currentCode) || pyDefaults.includes(currentCode) || currentCode.trim() === "";
-
-            if (isUntouched) {
+            // Tải bản nháp cho ngôn ngữ mới
+            if (api.isLoggedIn()) {
+                const res = await api.getDraft(currentProblem.id, lang);
+                if (res && res.code) {
+                    editorInstance.setValue(res.code);
+                } else {
+                    editorInstance.setValue(getBoilerplate(lang, currentProblem.id));
+                }
+            } else {
                 editorInstance.setValue(getBoilerplate(lang, currentProblem.id));
             }
 

@@ -9,6 +9,7 @@ const problemsRouter = require("./src/routes/problems");
 const submissionsRouter = require("./src/routes/submissions");
 const authRouter = require("./src/routes/auth");
 const healthRouter = require("./src/routes/health");
+const usersRouter = require("./src/routes/users");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -19,6 +20,7 @@ app.use(express.json({ limit: "1mb" }));
 
 app.use("/api/health", healthRouter);
 app.use("/api/auth", authRouter);
+app.use("/api/users", usersRouter);
 
 app.use("/api/problems", problemsRouter);
 app.use("/api/submissions", submissionsRouter);

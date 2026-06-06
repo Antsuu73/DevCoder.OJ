@@ -128,6 +128,28 @@ const api = {
         return apiRequest("/api/submissions");
     },
 
+    async getUserTasks() {
+        return apiRequest("/api/users/tasks");
+    },
+
+    async toggleUserTask(taskId, completed) {
+        return apiRequest("/api/users/tasks/toggle", {
+            method: "POST",
+            body: JSON.stringify({ taskId, completed })
+        });
+    },
+
+    async getDraft(problemId, language) {
+        return apiRequest(`/api/users/drafts/${encodeURIComponent(problemId)}/${encodeURIComponent(language)}`);
+    },
+
+    async saveDraft(problemId, language, code) {
+        return apiRequest("/api/users/drafts", {
+            method: "POST",
+            body: JSON.stringify({ problemId, language, code })
+        });
+    },
+
     async clearHistory() {
         return apiRequest("/api/auth/history", { method: "DELETE" });
     }

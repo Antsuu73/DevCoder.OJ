@@ -19,7 +19,20 @@ const defaultTasks = {
     ]
 };
 
-document.addEventListener("DOMContentLoaded", function () {
+let userTaskStatus = {};
+
+document.addEventListener("DOMContentLoaded", async function () {
+    if (api.isLoggedIn()) {
+        try {
+            const tasks = await api.getUserTasks();
+            tasks.forEach(t => {
+                userTaskStatus[t.task_id] = t.completed === 1;
+            });
+        } catch (err) {
+            console.error("Lỗi khi tải nhiệm vụ từ server:", err);
+        }
+    }
+
     // Tải các nhiệm vụ lên giao diện
     loadTasks();
     
@@ -40,8 +53,11 @@ function loadTasks() {
         const tasks = defaultTasks[cat];
         
         tasks.forEach(task => {
-            // Kiểm tra trạng thái đã lưu trong localStorage
-            const isCompleted = localStorage.getItem(`task_${task.id}`) === "true";
+            // Ưu tiên trạng thái từ server, nếu không có thì dùng localStorage (tương thích ngược)
+            let isCompleted = userTaskStatus[task.id];
+            if (isCompleted === undefined) {
+                isCompleted = localStorage.getItem(`task_${task.id}`) === "true";
+            }
             
             const taskHTML = `
                 <div class="task-item ${isCompleted ? 'task-checked' : ''}" id="task-container-${task.id}">
@@ -62,7 +78,7 @@ function loadTasks() {
 }
 
 // 3. HÀM XỬ LÝ CLICK TÍCH CHỌN HOÀN THÀNH
-function toggleTask(taskId) {
+async function toggleTask(taskId) {
     const checkbox = document.getElementById(`chk-${taskId}`);
     const container = document.getElementById(`task-container-${taskId}`);
     
@@ -71,10 +87,21 @@ function toggleTask(taskId) {
         
         if (isChecked) {
             container.classList.add("task-checked");
-            localStorage.setItem(`task_${taskId}`, "true");
         } else {
             container.classList.remove("task-checked");
-            localStorage.setItem(`task_${taskId}`, "false");
+        }
+
+        // Lưu vào localStorage cho khách
+        localStorage.setItem(`task_${taskId}`, isChecked ? "true" : "false");
+
+        // Lưu vào server nếu đã đăng nhập
+        if (api.isLoggedIn()) {
+            try {
+                await api.toggleUserTask(taskId, isChecked);
+                userTaskStatus[taskId] = isChecked;
+            } catch (err) {
+                console.error("Lỗi khi lưu nhiệm vụ:", err);
+            }
         }
     }
 }
