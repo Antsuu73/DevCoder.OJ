@@ -40,7 +40,13 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     if (typeof require !== "undefined") {
         require.config({ paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.39.0/min/vs' } });
-        require(['vs/editor/editor.main'], function () {
+        
+        // Kiểm tra nếu đã load rồi thì không load lại
+        const isMonacoLoaded = typeof monaco !== "undefined" && typeof monaco.editor !== "undefined";
+        
+        const initMonaco = () => {
+            if (editorInstance) return; // Đã có instance rồi
+            
             editorInstance = monaco.editor.create(document.getElementById('editor'), {
                 value: getBoilerplate("cpp", currentProblem.id),
                 language: 'cpp',
@@ -71,7 +77,15 @@ document.addEventListener("DOMContentLoaded", async function () {
                     }
                 }, 2000);
             });
-        });
+        };
+
+        if (isMonacoLoaded) {
+            initMonaco();
+        } else {
+            require(['vs/editor/editor.main'], function () {
+                initMonaco();
+            });
+        }
     }
 
     const langSelect = document.getElementById("language-select");

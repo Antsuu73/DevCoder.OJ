@@ -10,6 +10,8 @@ function signToken(user) {
     );
 }
 
+const db = require("../db");
+
 function requireAuth(req, res, next) {
     const header = req.headers.authorization;
     if (!header?.startsWith("Bearer ")) {
@@ -18,6 +20,13 @@ function requireAuth(req, res, next) {
 
     try {
         const payload = jwt.verify(header.slice(7), JWT_SECRET);
+        
+        // Kiểm tra xem user có thực sự tồn tại trong DB không (đặc biệt quan trọng trên Vercel)
+        const user = db.prepare("SELECT id FROM users WHERE id = ?").get(payload.userId);
+        if (!user) {
+            return res.status(401).json({ error: "Tài khoản không tồn tại hoặc đã bị reset. Vui lòng đăng nhập lại." });
+        }
+
         req.user = payload;
         next();
     } catch {

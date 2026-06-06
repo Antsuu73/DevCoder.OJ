@@ -69,20 +69,25 @@ router.post("/", requireAuth, async (req, res) => {
         });
 
         const submissionId = uuidv4();
-        db.prepare(`
-            INSERT INTO submissions
-            (id, user_id, problem_id, language, code, status, execution_time_ms,
-             passed_tests, total_tests, failed_test_index, failed_input,
-             failed_expected, failed_actual, compile_error)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `).run(
-            submissionId, userId, problemId, language, code,
-            judgeResult.status, judgeResult.executionTimeMs,
-            judgeResult.passedTests, judgeResult.totalTests,
-            judgeResult.failedTestIndex, judgeResult.failedInput,
-            judgeResult.failedExpected, judgeResult.failedActual,
-            judgeResult.compileError
-        );
+        try {
+            db.prepare(`
+                INSERT INTO submissions
+                (id, user_id, problem_id, language, code, status, execution_time_ms,
+                 passed_tests, total_tests, failed_test_index, failed_input,
+                 failed_expected, failed_actual, compile_error)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `).run(
+                submissionId, userId, problemId, language, code,
+                judgeResult.status, judgeResult.executionTimeMs,
+                judgeResult.passedTests, judgeResult.totalTests,
+                judgeResult.failedTestIndex, judgeResult.failedInput,
+                judgeResult.failedExpected, judgeResult.failedActual,
+                judgeResult.compileError
+            );
+        } catch (dbErr) {
+            console.error("Database Insert Error:", dbErr);
+            throw new Error("Lỗi khi lưu kết quả vào database: " + dbErr.message);
+        }
 
         res.json({
             id: submissionId,
