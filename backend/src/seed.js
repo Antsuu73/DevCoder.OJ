@@ -144,43 +144,33 @@ const problems = [
     }
 ];
 
-const insertProblem = db.prepare(`
-    INSERT OR REPLACE INTO problems
-    (id, title, difficulty, accepted_rate, description, time_limit_ms, memory_limit_mb,
-     input_spec, output_spec, sample_input, sample_output)
-    VALUES (@id, @title, @difficulty, @accepted_rate, @description, @time_limit_ms,
-            @memory_limit_mb, @input_spec, @output_spec, @sample_input, @sample_output)
-`);
-
-const deleteTests = db.prepare("DELETE FROM test_cases WHERE problem_id = ?");
-const insertTest = db.prepare(`
-    INSERT INTO test_cases (problem_id, input, expected_output, is_sample, order_index)
-    VALUES (?, ?, ?, ?, ?)
-`);
-
-const seed = db.transaction(() => {
-    // Tạm thời tắt foreign keys để dọn dẹp dữ liệu cũ nếu cần, 
-    // nhưng ở đây ta dùng INSERT OR REPLACE cho problems và dọn test_cases theo id.
+async function seedProblems() {
     for (const problem of problems) {
         const { tests, ...row } = problem;
-        insertProblem.run(row);
 
-        deleteTests.run(problem.id);
-        tests.forEach((tc, index) => {
-            insertTest.run(
-                problem.id,
-                tc.input,
-                tc.expected,
-                tc.sample ? 1 : 0,
-                index
-            );
-        });
+        await db.run(`
+            INSERT OR REPLACE INTO problems
+            (id, title, difficulty, accepted_rate, description, time_limit_ms, memory_limit_mb,
+             input_spec, output_spec, sample_input, sample_output)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `, [
+            row.id, row.title, row.difficulty, row.accepted_rate, row.description,
+            row.time_limit_ms, row.memory_limit_mb, row.input_spec, row.output_spec,
+            row.sample_input, row.sample_output
+        ]);
+
+        await db.run("DELETE FROM test_cases WHERE problem_id = ?", [problem.id]);
+
+        for (let index = 0; index < tests.length; index++) {
+            const tc = tests[index];
+            await db.run(`
+                INSERT INTO test_cases (problem_id, input, expected_output, is_sample, order_index)
+                VALUES (?, ?, ?, ?, ?)
+            `, [problem.id, tc.input, tc.expected, tc.sample ? 1 : 0, index]);
+        }
     }
-});
 
-try {
-    seed();
     console.log(`Đã seed ${problems.length} bài tập vào database.`);
-} catch (err) {
-    console.error("Lỗi khi seed dữ liệu:", err.message);
 }
+
+module.exports = { seedProblems };

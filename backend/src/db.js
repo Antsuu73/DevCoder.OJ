@@ -1,26 +1,8 @@
-const Database = require("better-sqlite3");
+const { createClient } = require("@libsql/client");
 const path = require("path");
 const fs = require("fs");
 
-// Vercel environment check
-const isVercel = process.env.VERCEL === "1";
-const dataDir = process.env.DB_PATH 
-    ? path.dirname(process.env.DB_PATH)
-    : (isVercel ? path.join("/", "tmp", "data") : path.join(__dirname, "..", "data"));
-
-if (!fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir, { recursive: true });
-}
-
-const dbPath = process.env.DB_PATH || path.join(dataDir, "oj.db");
-const db = new Database(dbPath);
-
-// Tắt cưỡng bức FOREIGN KEY khi đang dev/test nếu gặp lỗi quá nặng, 
-// nhưng tốt nhất là quản lý dữ liệu sạch.
-db.pragma("journal_mode = WAL");
-db.pragma("foreign_keys = ON");
-
-db.exec(`
+const SCHEMA_SQL = `
     CREATE TABLE IF NOT EXISTS problems (
         id TEXT PRIMARY KEY,
         title TEXT NOT NULL,
@@ -99,6 +81,70 @@ db.exec(`
     CREATE INDEX IF NOT EXISTS idx_submissions_user ON submissions(user_id);
     CREATE INDEX IF NOT EXISTS idx_submissions_problem ON submissions(problem_id);
     CREATE INDEX IF NOT EXISTS idx_test_cases_problem ON test_cases(problem_id);
-`);
+`;
 
-module.exports = db;
+let client = null;
+let initPromise = null;
+
+function getDbUrl() {
+    if (process.env.TURSO_DATABASE_URL) {
+        return process.env.TURSO_DATABASE_URL;
+    }
+
+    const dataDir = process.env.DB_PATH
+        ? path.dirname(process.env.DB_PATH)
+        : path.join(__dirname, "..", "data");
+
+    if (!fs.existsSync(dataDir)) {
+        fs.mkdirSync(dataDir, { recursive: true });
+    }
+
+    const dbPath = process.env.DB_PATH || path.join(dataDir, "oj.db");
+    return `file:${dbPath}`;
+}
+
+async function initDb() {
+    if (initPromise) return initPromise;
+
+    initPromise = (async () => {
+        const url = getDbUrl();
+        client = createClient({
+            url,
+            authToken: process.env.TURSO_AUTH_TOKEN
+        });
+
+        await client.execute("PRAGMA foreign_keys = ON");
+        await client.executeMultiple(SCHEMA_SQL);
+
+        const mode = process.env.TURSO_DATABASE_URL ? "Turso cloud" : "local file";
+        console.log(`Database đã sẵn sàng (${mode})`);
+    })();
+
+    return initPromise;
+}
+
+async function get(sql, args = []) {
+    const result = await client.execute({ sql, args });
+    return result.rows[0] || null;
+}
+
+async function all(sql, args = []) {
+    const result = await client.execute({ sql, args });
+    return result.rows;
+}
+
+async function run(sql, args = []) {
+    return client.execute({ sql, args });
+}
+
+async function batch(statements) {
+    return client.batch(statements, "write");
+}
+
+module.exports = {
+    initDb,
+    get,
+    all,
+    run,
+    batch
+};

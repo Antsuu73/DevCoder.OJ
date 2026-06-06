@@ -21,13 +21,13 @@ function formatProblem(row) {
     };
 }
 
-router.get("/", (req, res) => {
-    const rows = db.prepare("SELECT * FROM problems ORDER BY id").all();
+router.get("/", async (req, res) => {
+    const rows = await db.all("SELECT * FROM problems ORDER BY id");
     res.json(rows.map(formatProblem));
 });
 
-router.get("/:id", (req, res) => {
-    const row = db.prepare("SELECT * FROM problems WHERE id = ?").get(req.params.id);
+router.get("/:id", async (req, res) => {
+    const row = await db.get("SELECT * FROM problems WHERE id = ?", [req.params.id]);
     if (!row) {
         return res.status(404).json({ error: "Không tìm thấy bài tập" });
     }

@@ -1,12 +1,25 @@
 const express = require("express");
+const { execSync } = require("child_process");
 const { RUNTIME } = require("../services/judge");
 const db = require("../db");
 
 const router = express.Router();
 
-router.get("/", (req, res) => {
-    const problemCount = db.prepare("SELECT COUNT(*) AS count FROM problems").get();
-    const submissionCount = db.prepare("SELECT COUNT(*) AS count FROM submissions").get();
+function hasCompiler(name, args = ["--version"]) {
+    try {
+        execSync(`${name} ${args.join(" ")}`, { stdio: "ignore" });
+        return true;
+    } catch {
+        return false;
+    }
+}
+
+router.get("/", async (req, res) => {
+    const problemCount = await db.get("SELECT COUNT(*) AS count FROM problems");
+    const submissionCount = await db.get("SELECT COUNT(*) AS count FROM submissions");
+
+    const hasGpp = hasCompiler("g++");
+    const hasPython = hasCompiler("python") || hasCompiler("python3");
 
     res.json({
         status: "online",
@@ -15,6 +28,8 @@ router.get("/", (req, res) => {
             cpp: RUNTIME.cpp,
             python: RUNTIME.python
         },
+        judgeReady: hasGpp && hasPython,
+        database: process.env.TURSO_DATABASE_URL ? "turso-cloud" : "local-sqlite",
         stats: {
             problems: problemCount.count,
             submissions: submissionCount.count

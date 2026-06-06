@@ -1,51 +1,7 @@
 // js/problem.js
 
-const MONACO_CDN = "https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs";
-
 let editorInstance = null;
 let currentProblem = null;
-
-function loadMonacoEditor() {
-    if (window.__monacoLoadPromise) return window.__monacoLoadPromise;
-
-    window.__monacoLoadPromise = new Promise((resolve, reject) => {
-        if (window.monaco?.editor) {
-            resolve(window.monaco);
-            return;
-        }
-
-        const onLoaderReady = () => {
-            if (!window.__monacoConfigDone) {
-                require.config({
-                    paths: { vs: MONACO_CDN },
-                    ignoreDuplicateModules: ["vs/editor/editor.main"]
-                });
-                window.__monacoConfigDone = true;
-            }
-
-            if (typeof require.defined === "function" && require.defined("vs/editor/editor.main")) {
-                resolve(window.monaco);
-                return;
-            }
-
-            require(["vs/editor/editor.main"], () => resolve(window.monaco), reject);
-        };
-
-        if (typeof window.require === "function") {
-            onLoaderReady();
-            return;
-        }
-
-        const script = document.createElement("script");
-        script.src = `${MONACO_CDN}/loader.js`;
-        script.async = true;
-        script.onload = onLoaderReady;
-        script.onerror = () => reject(new Error("Không tải được Monaco Editor"));
-        document.head.appendChild(script);
-    });
-
-    return window.__monacoLoadPromise;
-}
 
 const boilerplates = {
     cpp: {
@@ -59,6 +15,32 @@ const boilerplates = {
         default: `# Viết mã nguồn Python 3 của bạn ở đây\n# Ví dụ:\n# n = int(input())\n# print(n)`
     }
 };
+
+function getEditorMode(lang) {
+    return lang === "cpp" ? "ace/mode/c_cpp" : "ace/mode/python";
+}
+
+function initCodeEditor(lang, problemId) {
+    if (typeof ace === "undefined") {
+        throw new Error("Không tải được trình soạn thảo code");
+    }
+
+    const editor = ace.edit("editor");
+    editor.setTheme("ace/theme/chrome");
+    editor.session.setMode(getEditorMode(lang));
+    editor.setOptions({
+        fontSize: "14px",
+        fontFamily: "JetBrains Mono, Courier New, monospace",
+        showPrintMargin: false,
+        tabSize: 4,
+        useSoftTabs: true,
+        wrap: false
+    });
+    editor.setValue(getBoilerplate(lang, problemId), -1);
+    editor.clearSelection();
+    editor.resize();
+    return editor;
+}
 
 document.addEventListener("DOMContentLoaded", async function () {
     const urlParams = new URLSearchParams(window.location.search);
@@ -83,38 +65,28 @@ document.addEventListener("DOMContentLoaded", async function () {
     document.getElementById("sample-output-content").innerText = currentProblem.sampleOutput;
 
     try {
-        const monaco = await loadMonacoEditor();
+        editorInstance = initCodeEditor("cpp", currentProblem.id);
 
-        if (!editorInstance) {
-            editorInstance = monaco.editor.create(document.getElementById("editor"), {
-                value: getBoilerplate("cpp", currentProblem.id),
-                language: "cpp",
-                theme: "vs",
-                automaticLayout: true,
-                fontFamily: "JetBrains Mono, Courier New, monospace",
-                fontSize: 14,
-                minimap: { enabled: false },
-                lineNumbersMinChars: 3
-            });
-
-            if (api.isLoggedIn()) {
-                api.getDraft(currentProblem.id, "cpp").then(res => {
-                    if (res?.code && editorInstance) editorInstance.setValue(res.code);
-                }).catch(() => {});
-            }
-
-            let saveTimeout;
-            editorInstance.onDidChangeModelContent(() => {
-                clearTimeout(saveTimeout);
-                saveTimeout = setTimeout(async () => {
-                    if (api.isLoggedIn() && editorInstance) {
-                        const code = editorInstance.getValue();
-                        const language = document.getElementById("language-select").value;
-                        await api.saveDraft(currentProblem.id, language, code);
-                    }
-                }, 2000);
-            });
+        if (api.isLoggedIn()) {
+            api.getDraft(currentProblem.id, "cpp").then(res => {
+                if (res?.code && editorInstance) {
+                    editorInstance.setValue(res.code, -1);
+                    editorInstance.clearSelection();
+                }
+            }).catch(() => {});
         }
+
+        let saveTimeout;
+        editorInstance.getSession().on("change", () => {
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(async () => {
+                if (api.isLoggedIn() && editorInstance) {
+                    const code = editorInstance.getValue();
+                    const language = document.getElementById("language-select").value;
+                    await api.saveDraft(currentProblem.id, language, code);
+                }
+            }, 2000);
+        });
     } catch (err) {
         const editorEl = document.getElementById("editor");
         if (editorEl) {
@@ -125,22 +97,21 @@ document.addEventListener("DOMContentLoaded", async function () {
     const langSelect = document.getElementById("language-select");
     langSelect.addEventListener("change", async function () {
         const lang = langSelect.value;
-        if (editorInstance) {
-            // Tải bản nháp cho ngôn ngữ mới
-            if (api.isLoggedIn()) {
-                const res = await api.getDraft(currentProblem.id, lang);
-                if (res && res.code) {
-                    editorInstance.setValue(res.code);
-                } else {
-                    editorInstance.setValue(getBoilerplate(lang, currentProblem.id));
-                }
-            } else {
-                editorInstance.setValue(getBoilerplate(lang, currentProblem.id));
-            }
+        if (!editorInstance) return;
 
-            const model = editorInstance.getModel();
-            window.monaco.editor.setModelLanguage(model, lang === "cpp" ? "cpp" : "python");
+        if (api.isLoggedIn()) {
+            const res = await api.getDraft(currentProblem.id, lang);
+            if (res?.code) {
+                editorInstance.setValue(res.code, -1);
+            } else {
+                editorInstance.setValue(getBoilerplate(lang, currentProblem.id), -1);
+            }
+        } else {
+            editorInstance.setValue(getBoilerplate(lang, currentProblem.id), -1);
         }
+
+        editorInstance.getSession().setMode(getEditorMode(lang));
+        editorInstance.clearSelection();
     });
 
     document.getElementById("submit-btn").addEventListener("click", () => handleSubmit(false));
@@ -195,11 +166,11 @@ function showJudgingUI(language, isRunOnly) {
 
     resultPanel.classList.remove("d-none");
     judgeDetails.classList.add("d-none");
-    resultPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    resultPanel.scrollIntoView({ behavior: "smooth", block: "nearest" });
 
     overallStatus.className = "alert alert-info py-2 px-3 fw-bold mb-3 d-flex align-items-center justify-content-between";
     overallStatus.innerHTML = `
-        <span><i class="fa-solid fa-gear fa-spin me-2"></i>Đang chấm trên server (${language === 'cpp' ? 'G++' : 'Python'})...</span>
+        <span><i class="fa-solid fa-gear fa-spin me-2"></i>Đang chấm trên server (${language === "cpp" ? "G++" : "Python"})...</span>
         <div class="spinner-border spinner-border-sm text-info" role="status"></div>
     `;
 
@@ -228,7 +199,7 @@ function displayJudgeResult(result, isRunOnly) {
             <span><i class="fa-solid fa-circle-check me-2"></i>ACCEPTED (${result.passedTests}/${result.totalTests} testcases)</span>
             <span class="badge bg-success font-mono"><i class="fa-solid fa-check"></i> AC</span>
         `;
-        judgeDetails.innerHTML = `<div class="text-success"><i class="fa-solid fa-check-double me-1"></i> Chúc mừng! Mã nguồn đã vượt qua ${isRunOnly ? 'các test mẫu' : 'toàn bộ testcase'}.</div>`;
+        judgeDetails.innerHTML = `<div class="text-success"><i class="fa-solid fa-check-double me-1"></i> Chúc mừng! Mã nguồn đã vượt qua ${isRunOnly ? "các test mẫu" : "toàn bộ testcase"}.</div>`;
     } else if (result.status === "CE") {
         overallStatus.className = "alert alert-secondary py-2 px-3 fw-bold mb-3 d-flex align-items-center justify-content-between";
         overallStatus.innerHTML = `

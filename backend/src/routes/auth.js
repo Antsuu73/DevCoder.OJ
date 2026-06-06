@@ -6,12 +6,12 @@ const { signToken, requireAuth } = require("../middleware/auth");
 
 const router = express.Router();
 
-function getUserStats(userId) {
-    const submissions = db.prepare("SELECT status FROM submissions WHERE user_id = ?").all(userId);
-    const solved = db.prepare(`
+async function getUserStats(userId) {
+    const submissions = await db.all("SELECT status FROM submissions WHERE user_id = ?", [userId]);
+    const solved = await db.get(`
         SELECT COUNT(DISTINCT problem_id) AS count
         FROM submissions WHERE user_id = ? AND status = 'AC'
-    `).get(userId);
+    `, [userId]);
 
     const totalSubmissions = submissions.length;
     const acCount = submissions.filter((s) => s.status === "AC").length;
@@ -20,8 +20,8 @@ function getUserStats(userId) {
     return { totalSubmissions, solvedCount: solved?.count || 0, accuracy };
 }
 
-function formatUser(user) {
-    const stats = getUserStats(user.id);
+async function formatUser(user) {
+    const stats = await getUserStats(user.id);
     return {
         id: user.id,
         username: user.username,
@@ -34,7 +34,7 @@ function formatUser(user) {
     };
 }
 
-router.post("/register", (req, res) => {
+router.post("/register", async (req, res) => {
     const { username, password, name, class: className, school, preferredLang } = req.body;
 
     if (!username?.trim() || !password || !name?.trim() || !className?.trim() || !school?.trim()) {
@@ -50,7 +50,7 @@ router.post("/register", (req, res) => {
         return res.status(400).json({ error: "Mật khẩu phải có ít nhất 6 ký tự" });
     }
 
-    const existing = db.prepare("SELECT id FROM users WHERE username = ?").get(cleanUsername);
+    const existing = await db.get("SELECT id FROM users WHERE username = ?", [cleanUsername]);
     if (existing) {
         return res.status(409).json({ error: "Tên đăng nhập đã tồn tại" });
     }
@@ -58,10 +58,10 @@ router.post("/register", (req, res) => {
     const id = uuidv4();
     const passwordHash = bcrypt.hashSync(password, 10);
 
-    db.prepare(`
+    await db.run(`
         INSERT INTO users (id, username, password_hash, name, class_name, school, preferred_lang)
         VALUES (?, ?, ?, ?, ?, ?, ?)
-    `).run(
+    `, [
         id,
         cleanUsername,
         passwordHash,
@@ -69,22 +69,22 @@ router.post("/register", (req, res) => {
         className.trim(),
         school.trim(),
         preferredLang || "C++ (GCC 17)"
-    );
+    ]);
 
-    const user = db.prepare("SELECT * FROM users WHERE id = ?").get(id);
+    const user = await db.get("SELECT * FROM users WHERE id = ?", [id]);
     const token = signToken(user);
 
-    res.status(201).json({ token, user: formatUser(user) });
+    res.status(201).json({ token, user: await formatUser(user) });
 });
 
-router.post("/login", (req, res) => {
+router.post("/login", async (req, res) => {
     const { username, password } = req.body;
 
     if (!username?.trim() || !password) {
         return res.status(400).json({ error: "Vui lòng nhập tên đăng nhập và mật khẩu" });
     }
 
-    const user = db.prepare("SELECT * FROM users WHERE username = ?").get(username.trim().toLowerCase());
+    const user = await db.get("SELECT * FROM users WHERE username = ?", [username.trim().toLowerCase()]);
     if (!user || !user.password_hash) {
         return res.status(401).json({ error: "Tên đăng nhập hoặc mật khẩu không đúng" });
     }
@@ -94,39 +94,39 @@ router.post("/login", (req, res) => {
     }
 
     const token = signToken(user);
-    res.json({ token, user: formatUser(user) });
+    res.json({ token, user: await formatUser(user) });
 });
 
-router.get("/me", requireAuth, (req, res) => {
-    const user = db.prepare("SELECT * FROM users WHERE id = ?").get(req.user.userId);
+router.get("/me", requireAuth, async (req, res) => {
+    const user = await db.get("SELECT * FROM users WHERE id = ?", [req.user.userId]);
     if (!user) {
         return res.status(404).json({ error: "Không tìm thấy tài khoản" });
     }
-    res.json(formatUser(user));
+    res.json(await formatUser(user));
 });
 
-router.put("/profile", requireAuth, (req, res) => {
+router.put("/profile", requireAuth, async (req, res) => {
     const { name, class: className, school, preferredLang } = req.body;
 
-    db.prepare(`
+    await db.run(`
         UPDATE users
         SET name = COALESCE(?, name),
             class_name = COALESCE(?, class_name),
             school = COALESCE(?, school),
             preferred_lang = COALESCE(?, preferred_lang)
         WHERE id = ?
-    `).run(name, className, school, preferredLang, req.user.userId);
+    `, [name, className, school, preferredLang, req.user.userId]);
 
-    const user = db.prepare("SELECT * FROM users WHERE id = ?").get(req.user.userId);
-    res.json(formatUser(user));
+    const user = await db.get("SELECT * FROM users WHERE id = ?", [req.user.userId]);
+    res.json(await formatUser(user));
 });
 
-router.delete("/history", requireAuth, (req, res) => {
-    db.prepare("DELETE FROM submissions WHERE user_id = ?").run(req.user.userId);
+router.delete("/history", requireAuth, async (req, res) => {
+    await db.run("DELETE FROM submissions WHERE user_id = ?", [req.user.userId]);
     res.json({ ok: true });
 });
 
-const { OAuth2Client } = require('google-auth-library');
+const { OAuth2Client } = require("google-auth-library");
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 router.post("/google", async (req, res) => {
@@ -139,22 +139,22 @@ router.post("/google", async (req, res) => {
             audience: process.env.GOOGLE_CLIENT_ID,
         });
         const payload = ticket.getPayload();
-        const email = payload['email'];
-        const name = payload['name'];
+        const email = payload.email;
+        const name = payload.name;
 
-        let user = db.prepare("SELECT * FROM users WHERE username = ?").get(email);
+        let user = await db.get("SELECT * FROM users WHERE username = ?", [email]);
 
         if (!user) {
             const id = uuidv4();
-            db.prepare(`
+            await db.run(`
                 INSERT INTO users (id, username, name, class_name, school, preferred_lang)
                 VALUES (?, ?, ?, ?, ?, ?)
-            `).run(id, email, name, "Học sinh Google", "Online", "C++ (GCC 17)");
-            user = db.prepare("SELECT * FROM users WHERE id = ?").get(id);
+            `, [id, email, name, "Học sinh Google", "Online", "C++ (GCC 17)"]);
+            user = await db.get("SELECT * FROM users WHERE id = ?", [id]);
         }
 
         const jwtToken = signToken(user);
-        res.json({ token: jwtToken, user: formatUser(user) });
+        res.json({ token: jwtToken, user: await formatUser(user) });
     } catch (error) {
         console.error("Google Auth Error:", error);
         res.status(400).json({ error: "Xác thực Google thất bại" });

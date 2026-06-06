@@ -1,4 +1,5 @@
 const jwt = require("jsonwebtoken");
+const db = require("../db");
 
 const JWT_SECRET = process.env.JWT_SECRET || "dcoj-dev-secret-change-in-production";
 
@@ -10,9 +11,7 @@ function signToken(user) {
     );
 }
 
-const db = require("../db");
-
-function requireAuth(req, res, next) {
+async function requireAuth(req, res, next) {
     const header = req.headers.authorization;
     if (!header?.startsWith("Bearer ")) {
         return res.status(401).json({ error: "Vui lòng đăng nhập" });
@@ -20,11 +19,9 @@ function requireAuth(req, res, next) {
 
     try {
         const payload = jwt.verify(header.slice(7), JWT_SECRET);
-        
-        // Kiểm tra xem user có thực sự tồn tại trong DB không (đặc biệt quan trọng trên Vercel)
-        const user = db.prepare("SELECT id FROM users WHERE id = ?").get(payload.userId);
+        const user = await db.get("SELECT id FROM users WHERE id = ?", [payload.userId]);
         if (!user) {
-            return res.status(401).json({ error: "Tài khoản không tồn tại hoặc đã bị reset. Vui lòng đăng nhập lại." });
+            return res.status(401).json({ error: "Tài khoản không tồn tại. Vui lòng đăng nhập lại." });
         }
 
         req.user = payload;
