@@ -1,0 +1,160 @@
+/* ==========================================================================
+   FILE: css/codeforces.css
+   DESCRIPTION: Codeforces Academic Clean Light Theme
+   ========================================================================== */
+
+:root {
+    --cf-bg: #f8f9fa;
+    --cf-card-bg: #ffffff;
+    --cf-border: #b9b9b9;
+    --cf-text-main: #333333;
+    --cf-text-muted: #777777;
+    --cf-link: #315efb;
+    
+    /* Màu Rank đặc trưng Codeforces */
+    --rank-grandmaster: #ff0000;
+    --rank-master: #ff8c00;
+    --rank-expert: #aa00aa;
+    --rank-specialist: #03a89e;
+    --rank-pupil: #008000;
+    --rank-newbie: #808080;
+}
+
+/* Đổi toàn bộ nền trang sang màu xám nhẹ */
+body {
+    background-color: var(--cf-bg) !important;
+    color: var(--cf-text-main) !important;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+.section-btn {
+    background: linear-gradient(#ffffff, #f0f0f0);
+    border: 1px solid #b9b9b9;
+    color: #315efb;
+    padding: 6px 14px;
+    border-radius: 3px;
+}
+
+.section-btn:hover {
+    background: linear-gradient(#f8f8f8, #e5e5e5);
+    color: #1d4ed8;
+}
+
+/* Ẩn hiệu ứng hạt bụi Cyberpunk để không gian sạch sẽ */
+#particles-container {
+    display: none !important;
+}
+
+/* Thanh Navbar kiểu truyền thống, đơn giản */
+.navbar {
+    background-color: var(--cf-card-bg) !important;
+    border-bottom: 2px solid var(--cf-border) !important;
+    box-shadow: none !important;
+}
+
+.navbar .navbar-brand {
+    color: var(--cf-text-main) !important;
+    font-size: 1.6rem;
+}
+
+.navbar .navbar-brand .text-cyber { color: #1a56db !important; }
+.navbar .navbar-brand .text-neon { color: var(--rank-grandmaster) !important; }
+
+.navbar .nav-link {
+    color: var(--cf-text-main) !important;
+    font-weight: 500;
+    padding: 0.5rem 1rem !important;
+    border-radius: 4px;
+}
+
+.navbar .nav-link:hover {
+    background-color: #e9ecef;
+    color: var(--cf-link) !important;
+}
+
+/* Các khung Card bọc ngoài (Khối nội dung) */
+.backend-card, .card {
+    background-color: var(--cf-card-bg) !important;
+    border: 1px solid var(--cf-border) !important;
+    border-radius: 6px !important;
+    box-shadow: none !important;
+    color: var(--cf-text-main) !important;
+}
+
+/* Tiêu đề các mục lớn */
+h4, h5, .text-light {
+    color: var(--cf-text-main) !important;
+}
+
+/* Thiết kế bảng danh sách bài tập (Problems) chuẩn Codeforces */
+.cf-problem-table {
+    width: 100%;
+    margin-bottom: 0;
+    border-collapse: collapse;
+}
+
+.cf-problem-table th {
+    background-color: #f0f0f0 !important;
+    color: var(--cf-text-main) !important;
+    font-weight: 600;
+    border: 1px solid var(--cf-border) !important;
+    padding: 8px !important;
+    font-size: 0.9rem;
+}
+
+.cf-problem-table td {
+    border: 1px solid var(--cf-border) !important;
+    padding: 8px !important;
+    background-color: var(--cf-card-bg) !important;
+    color: var(--cf-text-main) !important;
+}
+
+/* Các dòng xen kẽ có màu xám cực nhẹ giúp dễ đọc dòng */
+.cf-problem-table tr:nth-child(even) td {
+    background-color: #f4f5f7 !important;
+}
+
+/* Link bài tập */
+.cf-link {
+    color: var(--cf-link) !important;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.cf-link:hover {
+    text-decoration: underline !important;
+}
+
+/* Phân hạng màu sắc độ khó dựa theo cấu trúc điểm Codeforces */
+.cf-points {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: bold;
+}
+.diff-easy { color: var(--rank-pupil) !important; }       /* Xanh lá */
+.diff-medium { color: var(--rank-specialist) !important; } /* Xanh ngọc */
+.diff-hard { color: var(--rank-grandmaster) !important; }  /* Đỏ */
+
+/* Banner tiêu đề rút gọn tinh tế */
+.welcome-banner {
+    background: #ffffff !important;
+    border: 1px solid var(--cf-border) !important;
+    border-left: 5px solid var(--cf-link) !important;
+    border-radius: 4px !important;
+}
+
+.text-gradient-cyber {
+    background: none !important;
+    -webkit-text-fill-color: initial !important;
+    color: var(--cf-link) !important;
+}
+
+.profile-btn {
+    background-color: #f0f4ff !important;
+    color: var(--cf-link) !important;
+    border: 1px solid #ced4da !important;
+    border-radius: 4px;
+}
+
+.profile-btn:hover {
+    background-color: #e0e8ff !important;
+}

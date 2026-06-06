@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DevCoder - Cổng Lập Trình Thuật Toán</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/main.css">
+    
+    <style>
+        /* Tinh chỉnh bổ sung cho phong cách CSES Style Table */
+        .cses-style-table {
+            --bs-table-bg: transparent;
+            margin-bottom: 0;
+        }
+        .cses-style-table tr {
+            border-bottom: 1px solid #1f1f2e !important;
+            transition: background-color 0.15s ease;
+        }
+        .cses-style-table tr:hover {
+            background-color: #161622 !important;
+        }
+        .cses-style-table td {
+            padding: 0.6rem 0.5rem !important;
+            font-size: 0.95rem;
+        }
+        .cses-link {
+            color: #4facfe !important;
+            text-decoration: none;
+        }
+        .cses-link:hover {
+            text-decoration: underline !important;
+        }
+        .section-divider {
+            border-top: 1px solid #242433;
+            margin: 3rem 0;
+        }
+        /* Style cho nút bấm hệ màu Cyber thống nhất */
+        .btn-cyber-sm {
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            padding: 0.4rem 0.9rem;
+            transition: all 0.2s ease;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="particles-container"></div>
+
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top py-3 animate-fade-in">
+        <div class="container">
+            <a class="navbar-brand fw-bold text-glow" href="index.html">
+                <i class="fa-solid fa-terminal me-2 text-cyber"></i>DevCoder<span class="text-neon">.OJ</span>
+            </a>
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="mainNavbar">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0 gap-2 ms-4">
+                    <li class="nav-item"><a class="nav-link" href="#problems-section"><i class="fa-solid fa-code me-2"></i>Problems</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#tasks-section"><i class="fa-solid fa-list-check me-2"></i>Task</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#posts-section"><i class="fa-solid fa-hashtag me-2"></i>Post</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#wiki-section"><i class="fa-solid fa-book me-2"></i>Wiki</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#info-section"><i class="fa-solid fa-circle-info me-2"></i>Information</a></li>
+                </ul>
+                <div class="navbar-nav d-flex flex-row align-items-center gap-1" id="auth-nav"></div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4 animate-slide-up">
+        <div class="welcome-banner p-5 rounded-4 shadow position-relative overflow-hidden mb-5">
+            <div class="row align-items-center position-relative z-1">
+                <div class="col-md-8">
+                    <span class="badge bg-cyber mb-2 px-3 py-2 text-uppercase tracking-wider">Hệ Thống Trung Tâm</span>
+                    <h1 class="display-5 fw-bold text-light mb-3">Demo DCOJ <span class="text-gradient-cyber">DevCoder</span></h1>
+                    <p class="text-secondary fs-5">Đây là nơi tổng hợp thuật toán, bài làm cho hsg 9 trường THCS Lê Tấn Bê !</p>
+                </div>
+                <div class="col-md-4 d-none d-md-block text-center">
+                    <img src="https://images.unsplash.com/photo-1618401471353-b98afee0b2eb?q=80&w=350&auto=format&fit=crop" alt="Tech Dashboard" class="img-fluid rounded-3 floating-img shadow-lg">
+                </div>
+            </div>
+            <div class="banner-overlay-circle"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="row">
+            
+            <div class="col-lg-8">
+                
+                <section id="problems-section" class="animate-slide-up">
+                    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                        <div>
+                            <h4 class="text-light fw-bold m-0"><i class="fa-solid fa-square-poll-horizontal text-neon me-2"></i>CSES Problem Set</h4>
+                            <p class="text-muted text-sm m-0 mt-1">Danh sách bài tập lập trình cốt lõi, sắp xếp tinh giản theo phong cách CSES.</p>
+                        </div>
+                        <a href="problems.html" class="btn btn-outline-info btn-cyber-sm">
+                            Vào kho bài <i class="fa-solid fa-arrow-right-to-bracket ms-1"></i>
+                        </a>
+                    </div>
+                    
+                    <div class="card shadow p-3 rounded-3 backend-card border-0">
+                        <div class="table-responsive">
+                            <table class="table cses-style-table table-dark align-middle">
+                                <tbody id="cses-problem-body">
+                                    </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <div class="section-divider"></div>
+
+                <section id="tasks-section" class="animate-slide-up">
+                    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                        <h4 class="text-light fw-bold m-0"><i class="fa-solid fa-list-check text-warning me-2"></i>Nhiệm Vụ Chiến Dịch</h4>
+                        <a href="tasks.html" class="btn btn-outline-warning btn-cyber-sm">
+                            Chi tiết Task <i class="fa-solid fa-sliders ms-1"></i>
+                        </a>
+                    </div>
+
+                    <div class="card shadow p-4 rounded-4 backend-card">
+                        <div class="d-flex align-items-start gap-3 mb-3">
+                            <input class="form-check-input bg-dark border-secondary p-2 mt-1" type="checkbox" checked disabled>
+                            <div>
+                                <h6 class="text-light fw-bold m-0 text-decoration-line-through text-muted">Xây dựng Poster Tự hào dòng máu Lạc Hồng</h6>
+                                <small class="text-success"><i class="fa-solid fa-circle-check me-1"></i>Đã hoàn thành - Dự án Sắc xanh sử Việt</small>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-start gap-3 mb-3">
+                            <input class="form-check-input bg-dark border-secondary p-2 mt-1" type="checkbox" checked disabled>
+                            <div>
+                                <h6 class="text-light fw-bold m-0 text-decoration-line-through text-muted">Thiết kế đồ họa cổ động Phòng chống thuốc lá cho Nhóm 3 Lớp 8/11</h6>
+                                <small class="text-success"><i class="fa-solid fa-circle-check me-1"></i>Đã nghiệm thu nội bộ nhóm</small>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-start gap-3">
+                            <input class="form-check-input bg-dark border-info p-2 mt-1" type="checkbox">
+                            <div>
+                                <h6 class="text-light fw-bold m-0">Giải quyết trọn vẹn bài toán kiểm tra Số Nguyên Tố trên IDE</h6>
+                                <small class="text-info"><i class="fa-solid fa-spinner fa-spin me-1"></i>Đang thực hiện (Độ khó: Khó)</small>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <div class="section-divider"></div>
+
+                <section id="posts-section" class="mb-5 animate-slide-up">
+                    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                        <h4 class="text-light fw-bold m-0"><i class="fa-solid fa-hashtag text-purple me-2"></i>Bài Viết & Diễn Đàn</h4>
+                        <a href="posts.html" class="btn btn-outline-primary btn-cyber-sm" style="color: #a855f7; border-color: #a855f7;">
+                            Xem bài viết <i class="fa-solid fa-comments ms-1"></i>
+                        </a>
+                    </div>
+                    
+                    <div class="card shadow p-4 rounded-4 backend-card mb-3">
+                        <span class="text-cyber text-xs fw-bold text-uppercase mb-1 d-block">Mẹo Lập Trình</span>
+                        <h5 class="text-light fw-bold mb-2">Làm thế nào để cài đặt Ubuntu song song với Windows không lỗi Boot?</h5>
+                        <p class="text-secondary text-sm">Chia sẻ kinh nghiệm thực tế khi phân chia lại ổ đĩa cứng, cấu hình phân vùng EFI và xử lý menu GNU GRUB an toàn khi cài Linux Mint hoặc Ubuntu...</p>
+                        <div class="d-flex justify-content-between align-items-center mt-3 text-xs text-muted">
+                            <span><i class="fa-regular fa-user me-1"></i>Cộng đồng Linux VN</span>
+                            <span><i class="fa-regular fa-comment me-1"></i>42 bình luận</span>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+
+            <div class="col-lg-4">
+                
+                <section id="wiki-section" class="mb-4 animate-slide-up">
+                    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                        <h5 class="text-light fw-bold m-0"><i class="fa-solid fa-book text-success me-2"></i>Wiki Thuật Toán</h5>
+                        <a href="wiki.html" class="btn btn-outline-success btn-xs py-1 px-2" style="border-radius: 4px; font-size: 0.8rem;">
+                            Tra cứu <i class="fa-solid fa-magnifying-glass ms-1"></i>
+                        </a>
+                    </div>
+
+                    <div class="card shadow p-3 rounded-4 backend-card">
+                        <ul class="list-unstyled m-0">
+                            <li class="py-2 border-bottom border-secondary">
+                                <a href="wiki.html" class="text-decoration-none text-light text-sm d-flex justify-content-between align-items-center">
+                                    <span><i class="fa-regular fa-bookmark text-info me-2"></i>Lý thuyết Số học cơ bản</span>
+                                    <i class="fa-solid fa-chevron-right text-xs text-muted"></i>
+                                </a>
+                            </li>
+                            <li class="py-2 border-bottom border-secondary">
+                                <a href="wiki.html" class="text-decoration-none text-light text-sm d-flex justify-content-between align-items-center">
+                                    <span><i class="fa-regular fa-bookmark text-info me-2"></i>Cấu trúc dữ liệu mảng (Array)</span>
+                                    <i class="fa-solid fa-chevron-right text-xs text-muted"></i>
+                                </a>
+                            </li>
+                            <li class="py-2">
+                                <a href="wiki.html" class="text-decoration-none text-light text-sm d-flex justify-content-between align-items-center">
+                                    <span><i class="fa-regular fa-bookmark text-info me-2"></i>Thuật toán Tìm kiếm Nhị phân</span>
+                                    <i class="fa-solid fa-chevron-right text-xs text-muted"></i>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </section>
+
+                <section id="info-section" class="animate-slide-up">
+                    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                        <h5 class="text-light fw-bold m-0"><i class="fa-solid fa-circle-info text-info me-2"></i>Information</h5>
+                        <a href="info.html" class="btn btn-outline-secondary btn-xs py-1 px-2" style="border-radius: 4px; font-size: 0.8rem; color: #adadad; border-color: #444;">
+                            Xem thêm <i class="fa-solid fa-angle-right ms-1"></i>
+                        </a>
+                    </div>
+
+                    <div class="card shadow rounded-4 overflow-hidden mini-banner-card border-0 mb-3">
+                        <img src="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=400&auto=format&fit=crop" alt="Contest Banner" class="w-100 mini-banner-img">
+                        <div class="mini-banner-body p-3">
+                            <h6 class="text-light fw-bold m-0">Kỳ thi Tuần Thuật Toán #05</h6>
+                            <small class="text-cyber">Diễn ra tự động vào tối thứ Bảy tuần này</small>
+                        </div>
+                    </div>
+                    <div class="card shadow p-3 rounded-4 backend-card text-xs text-muted">
+                        <p class="m-0 mb-2"><i class="fa-solid fa-server me-2 text-success"></i>Trạng thái máy chủ: <strong>Ổn định (Online)</strong></p>
+                        <p class="m-0"><i class="fa-solid fa-microchip me-2 text-warning"></i>Phiên bản Sandbox: <strong>Python 3.10.x & C++17</strong></p>
+                    </div>
+                </section>
+
+            </div>
+
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/auth-nav.js"></script>
+    <script src="js/main.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

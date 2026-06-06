@@ -1,0 +1,175 @@
+/* ==========================================================================
+   FILE: css/style.css
+   DESCRIPTION: Cấu trúc nền tảng Codeforces Academic Style (Toàn hệ thống)
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. ĐỊNH NGHĨA BIẾN MÀU SẮC CHỦ ĐẠO (Global Design Tokens)
+   -------------------------------------------------------------------------- */
+:root {
+    /* Bảng màu chuẩn học thuật trực quan */
+    --cf-bg-main: #f8f9fa;       /* Nền xám nhạt toàn trang */
+    --cf-card-white: #ffffff;    /* Nền trắng cho các khối nội dung */
+    --cf-border-gray: #b9b9b9;   /* Đường viền xám mảnh */
+    
+    /* Màu chữ phân cấp độ tương phản */
+    --text-dark-main: #212529;   /* Chữ chính màu đen xám */
+    --text-dark-muted: #6c757d;  /* Chữ phụ màu xám mờ */
+    
+    /* Màu sắc liên kết và điểm nhấn điều hướng */
+    --color-primary-blue: #1a56db;
+    --color-link-hover: #084298;
+    
+    /* Hiệu ứng chuyển động */
+    --transition-smooth: all 0.2s ease-in-out;
+}
+
+/* --------------------------------------------------------------------------
+   2. THIẾT LẬP CƠ BẢN TOÀN TRANG (Reset & Base Styles)
+   -------------------------------------------------------------------------- */
+body {
+    background-color: var(--cf-bg-main) !important;
+    color: var(--text-dark-main) !important;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.6;
+    padding-bottom: 50px;
+}
+
+/* Định dạng phông chữ đơn cách viết code chuyên dụng */
+.font-mono, .font-mono-cses {
+    font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace !important;
+}
+
+/* --------------------------------------------------------------------------
+   3. THANH ĐIỀU HƯỚNG PHẲNG (Flat Navbar Customization)
+   -------------------------------------------------------------------------- */
+.navbar {
+    background-color: var(--cf-card-white) !important;
+    border-bottom: 2px solid var(--cf-border-gray) !important;
+    padding: 0.75rem 0 !important;
+}
+
+.navbar-brand {
+    font-size: 1.5rem;
+    letter-spacing: -0.5px;
+    color: var(--text-dark-main) !important;
+}
+
+/* Các liên kết menu trên thanh điều hướng */
+.navbar .nav-link {
+    color: var(--text-dark-main) !important;
+    font-weight: 500;
+    font-size: 0.95rem;
+    padding: 0.5rem 1rem !important;
+    border-radius: 4px;
+    transition: var(--transition-smooth);
+}
+
+.navbar .nav-link:hover {
+    background-color: #e9ecef;
+    color: var(--color-primary-blue) !important;
+}
+
+/* Nút liên kết trang cá nhân góc phải */
+.profile-btn {
+    background-color: #f0f4ff !important;
+    color: var(--color-primary-blue) !important;
+    border: 1px solid #ced4da !important;
+    border-radius: 4px;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.9rem;
+    transition: var(--transition-smooth);
+}
+
+.profile-btn:hover {
+    background-color: #e0e8ff !important;
+    border-color: var(--color-primary-blue) !important;
+    color: var(--color-link-hover) !important;
+}
+
+/* --------------------------------------------------------------------------
+   4. THIẾT KẾ KHỐI HỘP NỘI DUNG (Academic Content Cards)
+   -------------------------------------------------------------------------- */
+.card, .backend-card {
+    background-color: var(--cf-card-white) !important;
+    border: 1px solid var(--cf-border-gray) !important;
+    border-radius: 6px !important;
+    box-shadow: none !important; /* Loại bỏ đổ bóng neon mờ ảo */
+    color: var(--text-dark-main) !important;
+    transition: var(--transition-smooth);
+}
+
+/* Đường kẻ phân rã các khu vực nhỏ bên trong khối */
+hr.border-secondary {
+    border-color: var(--cf-border-gray) !important;
+    opacity: 0.6;
+}
+
+/* --------------------------------------------------------------------------
+   5. BANNER TIÊU ĐỀ RÚT GỌN (Welcome Banner Section)
+   -------------------------------------------------------------------------- */
+.welcome-banner {
+    background: var(--cf-card-white) !important;
+    border: 1px solid var(--cf-border-gray) !important;
+    border-left: 5px solid var(--color-primary-blue) !important; /* Điểm nhấn viền xanh dọc bìa trái */
+    border-radius: 6px !important;
+    padding: 2.5rem !important;
+}
+
+/* Ảnh minh họa kỹ thuật phẳng */
+.floating-img {
+    filter: grayscale(10%) contrast(105%);
+    border: 1px solid var(--cf-border-gray);
+    max-height: 180px;
+    object-fit: cover;
+}
+
+/* --------------------------------------------------------------------------
+   6. HỆ THỐNG PHÂN LOẠI BADGE & TIỆN ÍCH (Badges & Utility Classes)
+   -------------------------------------------------------------------------- */
+.badge {
+    font-weight: 600;
+    padding: 0.4em 0.7em !important;
+    border-radius: 4px !important;
+}
+
+/* Màu chữ xám mô tả kích thước nhỏ */
+.text-muted, .text-secondary {
+    color: var(--text-dark-muted) !important;
+}
+
+.text-xs { font-size: 0.75rem !important; }
+.text-sm { font-size: 0.875rem !important; }
+
+/* --------------------------------------------------------------------------
+   7. HIỆU ỨNG CHUYỂN ĐỘNG TRỰC QUAN NHẸ (Micro Animations)
+   -------------------------------------------------------------------------- */
+.animate-slide-up {
+    animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* --------------------------------------------------------------------------
+   8. ĐƯỜNG LINK THẢO LUẬN TRÊN DIỄN ĐÀN (Forum Post Links)
+   -------------------------------------------------------------------------- */
+#posts-section h5 {
+    color: var(--color-primary-blue) !important;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+}
+
+#posts-section h5:hover {
+    color: var(--color-link-hover) !important;
+    text-decoration: underline;
+}
