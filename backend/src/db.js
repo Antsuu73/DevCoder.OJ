@@ -4,15 +4,15 @@ const fs = require("fs");
 
 // Vercel environment check
 const isVercel = process.env.VERCEL === "1";
-const dataDir = isVercel 
-    ? path.join("/", "tmp", "data") 
-    : path.join(__dirname, "..", "data");
+const dataDir = process.env.DB_PATH 
+    ? path.dirname(process.env.DB_PATH)
+    : (isVercel ? path.join("/", "tmp", "data") : path.join(__dirname, "..", "data"));
 
 if (!fs.existsSync(dataDir)) {
     fs.mkdirSync(dataDir, { recursive: true });
 }
 
-const dbPath = path.join(dataDir, "oj.db");
+const dbPath = process.env.DB_PATH || path.join(dataDir, "oj.db");
 
 // Nếu chạy trên Vercel và file DB chưa tồn tại trong /tmp, 
 // ta có thể copy file database mẫu từ repo vào /tmp nếu muốn,

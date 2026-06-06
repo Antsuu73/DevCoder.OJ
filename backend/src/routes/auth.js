@@ -126,4 +126,39 @@ router.delete("/history", requireAuth, (req, res) => {
     res.json({ ok: true });
 });
 
+const { OAuth2Client } = require('google-auth-library');
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+router.post("/google", async (req, res) => {
+    const { token } = req.body;
+    if (!token) return res.status(400).json({ error: "Thiếu Google Token" });
+
+    try {
+        const ticket = await googleClient.verifyIdToken({
+            idToken: token,
+            audience: process.env.GOOGLE_CLIENT_ID,
+        });
+        const payload = ticket.getPayload();
+        const email = payload['email'];
+        const name = payload['name'];
+
+        let user = db.prepare("SELECT * FROM users WHERE username = ?").get(email);
+
+        if (!user) {
+            const id = uuidv4();
+            db.prepare(`
+                INSERT INTO users (id, username, name, class_name, school, preferred_lang)
+                VALUES (?, ?, ?, ?, ?, ?)
+            `).run(id, email, name, "Học sinh Google", "Online", "C++ (GCC 17)");
+            user = db.prepare("SELECT * FROM users WHERE id = ?").get(id);
+        }
+
+        const jwtToken = signToken(user);
+        res.json({ token: jwtToken, user: formatUser(user) });
+    } catch (error) {
+        console.error("Google Auth Error:", error);
+        res.status(400).json({ error: "Xác thực Google thất bại" });
+    }
+});
+
 module.exports = router;

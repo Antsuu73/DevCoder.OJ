@@ -12,6 +12,44 @@ const RUNTIME = {
     python: process.env.PYTHON_BIN || "python"
 };
 
+// Tự động phát hiện python3 nếu python không tồn tại
+const { execSync } = require("child_process");
+try {
+    if (!process.env.PYTHON_BIN) {
+        try {
+            execSync("python --version", { stdio: "ignore" });
+        } catch (e) {
+            execSync("python3 --version", { stdio: "ignore" });
+            RUNTIME.python = "python3";
+        }
+    }
+} catch (e) {
+    console.warn("Cảnh báo: Không tìm thấy lệnh python hoặc python3 trên hệ thống!");
+}
+
+// Danh sách các từ khóa nguy hiểm cần chặn (Soft sandbox)
+const DANGEROUS_KEYWORDS = {
+    cpp: [
+        "system(", "fork(", "vfork(", "exec(", "clone(", "socket(", 
+        "chmod(", "chown(", "kill(", "pthread_", "fstream", "ofstream"
+    ],
+    python: [
+        "os.system", "os.popen", "subprocess.", "pty.", "shutil.", 
+        "socket.", "requests.", "urllib.", "builtins.open", "eval(", "exec(", 
+        "open(", "write(", "__import__", "getattr", "setattr"
+    ]
+};
+
+function securityCheck(code, language) {
+    const keywords = DANGEROUS_KEYWORDS[language] || [];
+    for (const kw of keywords) {
+        if (code.includes(kw)) {
+            return { ok: false, error: `Mã nguồn chứa từ khóa bị cấm vì lý do bảo mật: "${kw}"` };
+        }
+    }
+    return { ok: true };
+}
+
 function normalizeOutput(text) {
     if (text == null) return "";
     return text
@@ -76,6 +114,19 @@ async function runTestCase(executable, input, timeLimitMs, language, workDir) {
 }
 
 async function judgeCode({ code, language, testCases, timeLimitMs }) {
+    // 1. Kiểm tra bảo mật cơ bản
+    const security = securityCheck(code, language);
+    if (!security.ok) {
+        return {
+            status: "CE",
+            compileError: security.error,
+            passedTests: 0,
+            totalTests: testCases.length,
+            executionTimeMs: 0,
+            testResults: []
+        };
+    }
+
     const workDir = path.join(os.tmpdir(), `dcoj-${uuidv4()}`);
     fs.mkdirSync(workDir, { recursive: true });
 

@@ -1,3 +1,27 @@
+async function handleGoogleLogin(response) {
+    const errorEl = document.getElementById("login-error");
+    try {
+        const res = await fetch(`${API_BASE}/api/auth/google`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: response.credential })
+        });
+        
+        const data = await res.json();
+        if (res.ok) {
+            api.setSession(data.token, data.user);
+            window.location.href = 'profile.html';
+        } else {
+            errorEl.textContent = data.error || "Đăng nhập Google thất bại";
+            errorEl.classList.remove("d-none");
+        }
+    } catch (err) {
+        console.error("Lỗi Google Login:", err);
+        errorEl.textContent = "Không thể kết nối với máy chủ";
+        errorEl.classList.remove("d-none");
+    }
+}
+
 document.addEventListener("DOMContentLoaded", function () {
     if (api.isLoggedIn()) {
         window.location.href = "profile.html";

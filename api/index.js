@@ -11,6 +11,7 @@ const problemsRouter = require(path.join(srcPath, "routes", "problems"));
 const submissionsRouter = require(path.join(srcPath, "routes", "submissions"));
 const authRouter = require(path.join(srcPath, "routes", "auth"));
 const healthRouter = require(path.join(srcPath, "routes", "health"));
+const usersRouter = require(path.join(srcPath, "routes", "users"));
 
 const app = express();
 
@@ -19,6 +20,7 @@ app.use(express.json({ limit: "1mb" }));
 
 app.use("/api/health", healthRouter);
 app.use("/api/auth", authRouter);
+app.use("/api/users", usersRouter);
 app.use("/api/problems", problemsRouter);
 app.use("/api/submissions", submissionsRouter);
 

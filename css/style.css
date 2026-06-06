@@ -53,6 +53,9 @@ body {
     font-size: 1.5rem;
     letter-spacing: -0.5px;
     color: var(--text-dark-main) !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
 }
 
 /* Các liên kết menu trên thanh điều hướng */
@@ -63,6 +66,9 @@ body {
     padding: 0.5rem 1rem !important;
     border-radius: 4px;
     transition: var(--transition-smooth);
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
 }
 
 .navbar .nav-link:hover {
@@ -80,6 +86,28 @@ body {
     font-weight: 500;
     font-size: 0.9rem;
     transition: var(--transition-smooth);
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+}
+
+#auth-nav {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+}
+
+#auth-nav .btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    justify-content: center !important;
+}
+
+#auth-nav span {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 5px !important;
 }
 
 .profile-btn:hover {
