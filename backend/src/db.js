@@ -2,12 +2,21 @@ const Database = require("better-sqlite3");
 const path = require("path");
 const fs = require("fs");
 
-const dataDir = path.join(__dirname, "..", "data");
+// Vercel environment check
+const isVercel = process.env.VERCEL === "1";
+const dataDir = isVercel 
+    ? path.join("/", "tmp", "data") 
+    : path.join(__dirname, "..", "data");
+
 if (!fs.existsSync(dataDir)) {
     fs.mkdirSync(dataDir, { recursive: true });
 }
 
 const dbPath = path.join(dataDir, "oj.db");
+
+// Nếu chạy trên Vercel và file DB chưa tồn tại trong /tmp, 
+// ta có thể copy file database mẫu từ repo vào /tmp nếu muốn,
+// nhưng ở đây ta sẽ để nó tự tạo mới hoặc chạy seed.
 const db = new Database(dbPath);
 
 db.pragma("journal_mode = WAL");
