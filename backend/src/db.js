@@ -13,12 +13,10 @@ if (!fs.existsSync(dataDir)) {
 }
 
 const dbPath = process.env.DB_PATH || path.join(dataDir, "oj.db");
-
-// Nếu chạy trên Vercel và file DB chưa tồn tại trong /tmp, 
-// ta có thể copy file database mẫu từ repo vào /tmp nếu muốn,
-// nhưng ở đây ta sẽ để nó tự tạo mới hoặc chạy seed.
 const db = new Database(dbPath);
 
+// Tắt cưỡng bức FOREIGN KEY khi đang dev/test nếu gặp lỗi quá nặng, 
+// nhưng tốt nhất là quản lý dữ liệu sạch.
 db.pragma("journal_mode = WAL");
 db.pragma("foreign_keys = ON");
 
@@ -49,6 +47,8 @@ db.exec(`
 
     CREATE TABLE IF NOT EXISTS users (
         id TEXT PRIMARY KEY,
+        username TEXT UNIQUE,
+        password_hash TEXT,
         name TEXT NOT NULL DEFAULT 'Nguyễn Văn A',
         class_name TEXT NOT NULL DEFAULT 'Lớp 9/11',
         school TEXT NOT NULL DEFAULT 'THCS Lê Tấn Bê',
@@ -72,8 +72,8 @@ db.exec(`
         failed_actual TEXT,
         compile_error TEXT,
         created_at TEXT NOT NULL DEFAULT (datetime('now')),
-        FOREIGN KEY (user_id) REFERENCES users(id),
-        FOREIGN KEY (problem_id) REFERENCES problems(id)
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (problem_id) REFERENCES problems(id) ON DELETE CASCADE
     );
 
     CREATE TABLE IF NOT EXISTS user_tasks (
@@ -82,7 +82,7 @@ db.exec(`
         completed INTEGER DEFAULT 0,
         updated_at TEXT NOT NULL DEFAULT (datetime('now')),
         PRIMARY KEY (user_id, task_id),
-        FOREIGN KEY (user_id) REFERENCES users(id)
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     );
 
     CREATE TABLE IF NOT EXISTS problem_drafts (
@@ -92,23 +92,13 @@ db.exec(`
         code TEXT NOT NULL,
         updated_at TEXT NOT NULL DEFAULT (datetime('now')),
         PRIMARY KEY (user_id, problem_id, language),
-        FOREIGN KEY (user_id) REFERENCES users(id),
-        FOREIGN KEY (problem_id) REFERENCES problems(id)
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (problem_id) REFERENCES problems(id) ON DELETE CASCADE
     );
 
     CREATE INDEX IF NOT EXISTS idx_submissions_user ON submissions(user_id);
     CREATE INDEX IF NOT EXISTS idx_submissions_problem ON submissions(problem_id);
     CREATE INDEX IF NOT EXISTS idx_test_cases_problem ON test_cases(problem_id);
 `);
-
-// Migration: thêm cột auth cho users (tương thích DB cũ)
-const userColumns = db.prepare("PRAGMA table_info(users)").all().map((c) => c.name);
-if (!userColumns.includes("username")) {
-    db.exec("ALTER TABLE users ADD COLUMN username TEXT");
-}
-if (!userColumns.includes("password_hash")) {
-    db.exec("ALTER TABLE users ADD COLUMN password_hash TEXT");
-}
-db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_username ON users(username) WHERE username IS NOT NULL");
 
 module.exports = db;

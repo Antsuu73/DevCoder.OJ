@@ -159,6 +159,8 @@ const insertTest = db.prepare(`
 `);
 
 const seed = db.transaction(() => {
+    // Tạm thời tắt foreign keys để dọn dẹp dữ liệu cũ nếu cần, 
+    // nhưng ở đây ta dùng INSERT OR REPLACE cho problems và dọn test_cases theo id.
     for (const problem of problems) {
         const { tests, ...row } = problem;
         insertProblem.run(row);
@@ -176,5 +178,9 @@ const seed = db.transaction(() => {
     }
 });
 
-seed();
-console.log(`Đã seed ${problems.length} bài tập vào database.`);
+try {
+    seed();
+    console.log(`Đã seed ${problems.length} bài tập vào database.`);
+} catch (err) {
+    console.error("Lỗi khi seed dữ liệu:", err.message);
+}
