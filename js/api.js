@@ -1,8 +1,25 @@
 // js/api.js — Client gọi Backend API + Auth
 
-const API_BASE = (window.location.protocol === "file:" || !window.location.origin || window.location.origin === "null")
-    ? "http://localhost:3000"
-    : window.location.origin;
+const API_BASE = (() => {
+    // Ưu tiên cấu hình từ localStorage (nếu muốn debug với server khác)
+    const manualApi = localStorage.getItem("dcoj_api_url");
+    if (manualApi) return manualApi;
+
+    // Các trường hợp chạy offline hoặc file local
+    if (window.location.protocol === "file:" || !window.location.origin || window.location.origin === "null") {
+        return "http://localhost:3000";
+    }
+
+    // Nếu chạy trên localhost nhưng khác port 3000 (ví dụ Live Server port 5500)
+    // thì vẫn mặc định gọi backend ở port 3000
+    const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+    if (isLocal && window.location.port !== "3000") {
+        return "http://localhost:3000";
+    }
+
+    // Mặc định: dùng cùng origin với frontend (khi đã deploy hoặc chạy node server.js)
+    return window.location.origin;
+})();
 
 const TOKEN_KEY = "dcoj_token";
 const USER_KEY = "dcoj_user";
