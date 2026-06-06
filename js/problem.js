@@ -1,7 +1,51 @@
 // js/problem.js
 
+const MONACO_CDN = "https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs";
+
 let editorInstance = null;
 let currentProblem = null;
+
+function loadMonacoEditor() {
+    if (window.__monacoLoadPromise) return window.__monacoLoadPromise;
+
+    window.__monacoLoadPromise = new Promise((resolve, reject) => {
+        if (window.monaco?.editor) {
+            resolve(window.monaco);
+            return;
+        }
+
+        const onLoaderReady = () => {
+            if (!window.__monacoConfigDone) {
+                require.config({
+                    paths: { vs: MONACO_CDN },
+                    ignoreDuplicateModules: ["vs/editor/editor.main"]
+                });
+                window.__monacoConfigDone = true;
+            }
+
+            if (typeof require.defined === "function" && require.defined("vs/editor/editor.main")) {
+                resolve(window.monaco);
+                return;
+            }
+
+            require(["vs/editor/editor.main"], () => resolve(window.monaco), reject);
+        };
+
+        if (typeof window.require === "function") {
+            onLoaderReady();
+            return;
+        }
+
+        const script = document.createElement("script");
+        script.src = `${MONACO_CDN}/loader.js`;
+        script.async = true;
+        script.onload = onLoaderReady;
+        script.onerror = () => reject(new Error("Không tải được Monaco Editor"));
+        document.head.appendChild(script);
+    });
+
+    return window.__monacoLoadPromise;
+}
 
 const boilerplates = {
     cpp: {
@@ -38,53 +82,43 @@ document.addEventListener("DOMContentLoaded", async function () {
     document.getElementById("sample-input-content").innerText = currentProblem.sampleInput;
     document.getElementById("sample-output-content").innerText = currentProblem.sampleOutput;
 
-    if (typeof require !== "undefined") {
-        require.config({ paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.39.0/min/vs' } });
-        
-        // Kiểm tra nếu đã load rồi thì không load lại
-        const isMonacoLoaded = typeof monaco !== "undefined" && typeof monaco.editor !== "undefined";
-        
-        const initMonaco = () => {
-            if (editorInstance) return; // Đã có instance rồi
-            
-            editorInstance = monaco.editor.create(document.getElementById('editor'), {
+    try {
+        const monaco = await loadMonacoEditor();
+
+        if (!editorInstance) {
+            editorInstance = monaco.editor.create(document.getElementById("editor"), {
                 value: getBoilerplate("cpp", currentProblem.id),
-                language: 'cpp',
-                theme: 'vs',
+                language: "cpp",
+                theme: "vs",
                 automaticLayout: true,
-                fontFamily: 'JetBrains Mono, Courier New, monospace',
+                fontFamily: "JetBrains Mono, Courier New, monospace",
                 fontSize: 14,
                 minimap: { enabled: false },
                 lineNumbersMinChars: 3
             });
 
-            // Tải bản nháp từ server nếu có
             if (api.isLoggedIn()) {
                 api.getDraft(currentProblem.id, "cpp").then(res => {
-                    if (res && res.code) editorInstance.setValue(res.code);
-                });
+                    if (res?.code && editorInstance) editorInstance.setValue(res.code);
+                }).catch(() => {});
             }
 
-            // Tự động lưu nháp
             let saveTimeout;
             editorInstance.onDidChangeModelContent(() => {
                 clearTimeout(saveTimeout);
                 saveTimeout = setTimeout(async () => {
-                    if (api.isLoggedIn()) {
+                    if (api.isLoggedIn() && editorInstance) {
                         const code = editorInstance.getValue();
                         const language = document.getElementById("language-select").value;
                         await api.saveDraft(currentProblem.id, language, code);
                     }
                 }, 2000);
             });
-        };
-
-        if (isMonacoLoaded) {
-            initMonaco();
-        } else {
-            require(['vs/editor/editor.main'], function () {
-                initMonaco();
-            });
+        }
+    } catch (err) {
+        const editorEl = document.getElementById("editor");
+        if (editorEl) {
+            editorEl.innerHTML = `<div class="alert alert-danger m-3">Không tải được trình soạn thảo code: ${escapeHtml(err.message)}</div>`;
         }
     }
 
@@ -105,7 +139,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
 
             const model = editorInstance.getModel();
-            monaco.editor.setModelLanguage(model, lang === "cpp" ? "cpp" : "python");
+            window.monaco.editor.setModelLanguage(model, lang === "cpp" ? "cpp" : "python");
         }
     });
 

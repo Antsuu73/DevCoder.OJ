@@ -30,24 +30,56 @@ try {
 // Danh sách các từ khóa nguy hiểm cần chặn (Soft sandbox)
 const DANGEROUS_KEYWORDS = {
     cpp: [
-        "system(", "fork(", "vfork(", "exec(", "clone(", "socket(", 
-        "chmod(", "chown(", "kill(", "pthread_", "fstream", "ofstream"
+        /system\s*\(/,
+        /fork\s*\(/,
+        /vfork\s*\(/,
+        /exec\s*\(/,
+        /clone\s*\(/,
+        /socket\s*\(/,
+        /chmod\s*\(/,
+        /chown\s*\(/,
+        /kill\s*\(/,
+        /pthread_/,
+        /#include\s*<fstream>/,
+        /\bfstream\b/,
+        /\bofstream\b/,
+        /\bifstream\b/
     ],
     python: [
-        "os.system", "os.popen", "subprocess.", "pty.", "shutil.", 
-        "socket.", "requests.", "urllib.", "builtins.open", "eval(", "exec(", 
-        "open(", "write(", "__import__", "getattr", "setattr"
+        "os.system", "os.popen", "subprocess.", "pty.", "shutil.",
+        "socket.", "requests.", "urllib.", "builtins.open", "eval(", "exec(",
+        "__import__", "getattr", "setattr",
+        /\bopen\s*\(/,
+        /\.write\s*\(/
     ]
 };
 
 function securityCheck(code, language) {
-    const keywords = DANGEROUS_KEYWORDS[language] || [];
-    for (const kw of keywords) {
-        if (code.includes(kw)) {
-            return { ok: false, error: `Mã nguồn chứa từ khóa bị cấm vì lý do bảo mật: "${kw}"` };
+    const patterns = DANGEROUS_KEYWORDS[language] || [];
+    for (const pattern of patterns) {
+        if (pattern instanceof RegExp) {
+            if (pattern.test(code)) {
+                return { ok: false, error: `Mã nguồn chứa từ khóa bị cấm vì lý do bảo mật: ${pattern}` };
+            }
+        } else if (code.includes(pattern)) {
+            return { ok: false, error: `Mã nguồn chứa từ khóa bị cấm vì lý do bảo mật: "${pattern}"` };
         }
     }
     return { ok: true };
+}
+
+function formatCompilerError(language, rawError) {
+    const message = rawError?.toString() || "Lỗi biên dịch không xác định";
+    const missingCompiler =
+        /ENOENT|not recognized|not found|No such file or directory/i.test(message);
+
+    if (missingCompiler) {
+        const tool = language === "cpp" ? "G++ (C++17)" : "Python 3";
+        return `Không tìm thấy trình biên dịch ${tool} trên máy chủ. ` +
+            "Hãy chạy backend cục bộ bằng `npm start` trong thư mục backend (cần cài G++ và Python).";
+    }
+
+    return message;
 }
 
 function normalizeOutput(text) {
@@ -71,11 +103,11 @@ async function compileCpp(sourcePath, outputPath) {
         return { ok: true, error: stderr?.trim() || null };
     } catch (err) {
         const message = err.stderr?.toString() || err.message || "Lỗi biên dịch không xác định";
-        return { ok: false, error: message };
+        return { ok: false, error: formatCompilerError("cpp", message) };
     }
 }
 
-function runWithStdin(command, args, input, timeLimitMs, cwd) {
+function runWithStdin(command, args, input, timeLimitMs, cwd, language) {
     return new Promise((resolve) => {
         const child = spawn(command, args, { cwd, windowsHide: true });
 
@@ -93,7 +125,10 @@ function runWithStdin(command, args, input, timeLimitMs, cwd) {
 
         child.on("error", (err) => {
             clearTimeout(timer);
-            resolve({ stdout, stderr: err.message, exitCode: -1, killed });
+            const runtimeError = err.code === "ENOENT"
+                ? formatCompilerError(language, err.message)
+                : err.message;
+            resolve({ stdout, stderr: runtimeError, exitCode: -1, killed });
         });
 
         child.on("close", (code) => {
@@ -108,9 +143,9 @@ function runWithStdin(command, args, input, timeLimitMs, cwd) {
 
 async function runTestCase(executable, input, timeLimitMs, language, workDir) {
     if (language === "cpp") {
-        return runWithStdin(executable, [], input, timeLimitMs, workDir);
+        return runWithStdin(executable, [], input, timeLimitMs, workDir, "cpp");
     }
-    return runWithStdin(RUNTIME.python, [path.join(workDir, "main.py")], input, timeLimitMs, workDir);
+    return runWithStdin(RUNTIME.python, [path.join(workDir, "main.py")], input, timeLimitMs, workDir, "python");
 }
 
 async function judgeCode({ code, language, testCases, timeLimitMs }) {
